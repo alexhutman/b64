@@ -2,7 +2,7 @@
 
 
 char b64_lookup(char key);
-void encode_file(char* fname);
+void encode_file(FILE *fp);
 
 // This likely won't work for any configuration where chars are longer than 8 bits.
 
@@ -13,13 +13,28 @@ int main(int argc, char *argv[]) {
 	}
 	// Use the specified file
 	else {
-		encode_file(argv[1]);
+		/*
+		char *fname = argv[1];
+		FILE *fp = fopen(fname, "r");
+		if (fp == NULL) {
+			fprintf(stderr, "File %s does not exist!\n", fname);
+			return 1;
+		}
+
+		encode_file(fp);
+
+		if (fclose(fp) != 0) {
+			fprintf(stderr, "Error closing file %s\n", fname);
+			return 1;
+		}
+		*/
+		encode_file(NULL);
 	}
 
 	return 0;
 }
 
-void encode_file(char* fname) {
+void encode_file(FILE *fp) {
 	char tmp = '\0';
 	// For testing, just using a hardcoded buffer
 	// Using size of 3 because 3 = lcm(6,8) / 8

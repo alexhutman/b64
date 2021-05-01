@@ -11,7 +11,7 @@ fi
 TEST_STR="hi!"
 
 INTENDED="$(printf $TEST_STR | base64)" 
-RES="$(./b64 test)" 
+RES="$(./b64 test.sh)" 
 
 if [ "$INTENDED" != "$RES" ]; then
 	err_and_exit "Test failed! Received '$RES' instead of '$INTENDED'"
