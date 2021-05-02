@@ -40,15 +40,15 @@ void encode_file(FILE *fp) {
 	// Using a multiple of 3 because 3 = lcm(6,8) / 8
 	// i.e. using 3 chars (octets), we can extract 4 b64 sextets with no wasted space.
 	char in_buf[] = {'h', 'i', ' ', 't', 'h', 'e', 'r', 'e', '!'};
-	int buf_size = (int)(sizeof (in_buf))/(sizeof (char));
+	size_t buf_size = (sizeof (in_buf))/(sizeof (in_buf[0]));
 	char out_buf[50] = {0};
 
 	// The following representation of the buffer makes it easier to see why these operations are performed
 	// The number represents which sextet the bit is in, the grouping represents each octet
 	// 11111122 | 22223333 | 33444444
 
-	int num_triples = buf_size / 3;
-	int num_extra_bytes = buf_size % 3;
+	unsigned int num_triples = buf_size / 3;
+	unsigned int num_extra_bytes = buf_size % 3;
 
 	int first_oct, second_oct, third_oct;
 	int out_idx = 0;
