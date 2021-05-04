@@ -10,7 +10,7 @@ if ! gcc b64.c -o b64; then
 fi
 
 TEST_STR="Hello there, this is a test :)"
-INTENDED="$(printf $TEST_STR | base64)" 
+INTENDED="$(printf $TEST_STR | base64 -w 0)" 
 
 RES="$(printf $TEST_STR | ./b64)" 
 if [ "$INTENDED" = "$RES" ]; then
