@@ -11,11 +11,11 @@ void encode_last_block(char* in, char* out, unsigned int num_extra);
 int main(int argc, char *argv[]) {
 	// Read from stdin
 	if (argc < 2) {
-
+		encode_file(stdin);
 	}
+
 	// Use the specified file
 	else {
-		/*
 		char *fname = argv[1];
 		FILE *fp = fopen(fname, "r");
 		if (fp == NULL) {
@@ -29,8 +29,6 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "Error closing file %s\n", fname);
 			return 1;
 		}
-		*/
-		encode_file(NULL);
 	}
 
 	return 0;
