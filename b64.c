@@ -1,8 +1,11 @@
 #include <stdio.h>
+#include <unistd.h>
 
+// Number of 3 octets we should populate our buffers with
+#define NUM_TRIPLES 5
 
 char b64_lookup(char key);
-void encode_file(FILE *fp);
+void encode_file(int fd);
 void encode_block(char* in, char* out);
 void encode_last_block(char* in, char* out, unsigned int num_extra);
 
@@ -11,7 +14,7 @@ void encode_last_block(char* in, char* out, unsigned int num_extra);
 int main(int argc, char *argv[]) {
 	// Read from stdin
 	if (argc < 2) {
-		encode_file(stdin);
+		encode_file(STDIN_FILENO);
 	}
 
 	// Use the specified file
@@ -23,7 +26,17 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 
-		encode_file(fp);
+		int fd = fileno(fp);
+		if (fd < 0) {
+			fprintf(stderr, "Error getting file descriptor for %s\n", fname);
+
+			if (fclose(fp) != 0) {
+				fprintf(stderr, "Error closing file %s\n", fname);
+			}
+			return 1;
+		}
+
+		encode_file(fd);
 
 		if (fclose(fp) != 0) {
 			fprintf(stderr, "Error closing file %s\n", fname);
@@ -80,31 +93,43 @@ void encode_last_block(char *in, char *out, unsigned int num_extra) {
 	}
 }
 
-void encode_file(FILE *fp) {
+void encode_file(int fd) {
 	// For testing, just using a hardcoded buffer
 	// Using a multiple of 3 because 3 = lcm(6,8) / 8
 	// i.e. using 3 chars (octets), we can extract 4 b64 sextets with no wasted space.
-	char in_buf[] = {'h', 'i', ' ', 't', 'h', 'e', 'r', 'e', '!'};
-	char out_buf[50] = {0};
+	size_t num_in_bytes = NUM_TRIPLES * 3;
 
-	size_t buf_size = (sizeof (in_buf))/(sizeof (in_buf[0]));
+	char in_buf[num_in_bytes];
+	char out_buf[NUM_TRIPLES * 4 + 1];
+	out_buf[NUM_TRIPLES * 4] = '\0'; // Set last byte to 0 so we can print it
 
 	// The following representation of the buffer makes it easier to see why these operations are performed
 	// The number represents which sextet the bit is in, the grouping represents each octet
 	// 11111122 | 22223333 | 33444444
 
-	unsigned int num_triples = buf_size / 3;
-	unsigned int num_extra = buf_size % 3;
-
-	for (int i=0; i<num_triples; i++) {
-		encode_block(&in_buf[i*3], &out_buf[i*4]);
+	ssize_t bytes_read = 0;
+	while ((bytes_read = read(fd, &in_buf, num_in_bytes)) == num_in_bytes) {
+		for (int i=0; i<NUM_TRIPLES; i++) {
+			encode_block(&in_buf[i*3], &out_buf[i*4]);
+		}
+		printf("%s", out_buf);
 	}
 
-	if (num_extra > 0) {
-		encode_last_block(&in_buf[num_triples*3], &out_buf[num_triples*4], num_extra);
+	if (bytes_read > 0 && bytes_read < num_in_bytes) {
+		size_t num_remaining_triples = bytes_read/3;
+		for (int i=0; i < num_remaining_triples; i++) {
+			encode_block(&in_buf[i*3], &out_buf[i*4]);
+		}
+
+		size_t num_extra = bytes_read - num_remaining_triples*3;
+		if (num_extra > 0) {
+			encode_last_block(&in_buf[num_remaining_triples*3], &out_buf[num_remaining_triples*4], num_extra);
+		}
+		out_buf[(num_remaining_triples+1)*4] = '\0';
+		printf("%s", out_buf);
 	}
 
-	printf("%s\n", out_buf);
+	printf("\n");
 }
 
 // This function assumes it will always be given 0 <= key <= 63
