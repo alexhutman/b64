@@ -125,7 +125,9 @@ void encode_file(int fd) {
 		if (num_extra > 0) {
 			encode_last_block(&in_buf[num_remaining_triples*3], &out_buf[num_remaining_triples*4], num_extra);
 		}
-		out_buf[(num_remaining_triples+1)*4] = '\0';
+		// Taking the ceiling without dealing with floats
+		size_t max_out_idx = (num_remaining_triples + ((bytes_read % 3) != 0)) * 4;
+		out_buf[max_out_idx] = '\0';
 		printf("%s", out_buf);
 	}
 
